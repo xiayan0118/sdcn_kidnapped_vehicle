@@ -37,13 +37,13 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
      * NOTE: Consult particle_filter.h for more information about this method
      *   (and others in this file).
      */
-    num_particles = 20;  // TODO: Set the number of particles
+    this->num_particles = 15;  // TODO: Set the number of particles
 
     normal_distribution<double> dist_x(x, std[0]);
     normal_distribution<double> dist_y(y, std[1]);
     normal_distribution<double> dist_theta(theta, std[2]);
 
-    for (int i = 0; i < num_particles; ++i) {
+    for (int i = 0; i < this->num_particles; ++i) {
         Particle particle;
         particle.id = i;
         particle.x = dist_x(gen);
@@ -167,7 +167,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         for (auto &obs : observations) {
             double trans_x = x + cos(theta) * obs.x - sin(theta) * obs.y;
             double trans_y = y + sin(theta) * obs.x + cos(theta) * obs.y;
-
             transformed_obs.push_back(LandmarkObs { obs.id, trans_x, trans_y });
         }
 
@@ -180,7 +179,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                     double prob = gaussian_const
                                   * exp(-1.0 * ((pow((trans_ob.x - v_lm.x), 2) / (2.0 * s_x_squared))
                                                 + pow((trans_ob.y - v_lm.y), 2) / (2.0 * s_y_squared)));
-
                     particle.weight *= prob;
                 }
             }
@@ -203,7 +201,7 @@ void ParticleFilter::resample() {
     vector<Particle> resampled_particles;
 
     // pick a random index
-    uniform_int_distribution<int> rand_discrete(0, num_particles-1);
+    uniform_int_distribution<int> rand_discrete(0, this->num_particles - 1);
     int index = rand_discrete(gen);
 
     // get max weight
@@ -214,10 +212,10 @@ void ParticleFilter::resample() {
 
     // Spinning wheel re-sampling
     double beta = 0.0;
-    for (int i = 0; i < num_particles; i++) {
+    for (int i = 0; i < this->num_particles; i++) {
         beta += rand_continuous(gen) * 2.0;
         while (beta > this->weights[index]) {
-            index = (index + 1) % num_particles;
+            index = (index + 1) % this->num_particles;
             beta -= this->weights[index];
         }
         resampled_particles.push_back(particles[index]);
