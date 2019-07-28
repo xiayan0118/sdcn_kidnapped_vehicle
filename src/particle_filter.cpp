@@ -37,7 +37,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
      * NOTE: Consult particle_filter.h for more information about this method
      *   (and others in this file).
      */
-    num_particles = 20;  // TODO: Set the number of particles
+    num_particles = 15;  // TODO: Set the number of particles
 
     normal_distribution<double> dist_x(x, std[0]);
     normal_distribution<double> dist_y(y, std[1]);
@@ -145,6 +145,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     double s_y_squared = pow(s_y, 2);
     double gaussian_const = 1.0 / (2.0 * M_PI * s_x * s_y);
 
+    vector<double> updated_weights;
+
     for (auto &particle : this->particles) {
         double x = particle.x;
         double y = particle.y;
@@ -184,7 +186,11 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                 }
             }
         }
+
+        updated_weights.push_back(particle.weight);
     }
+
+    this->weights = updated_weights;
 }
 
 void ParticleFilter::resample() {
@@ -197,29 +203,23 @@ void ParticleFilter::resample() {
 
     vector<Particle> resampled_particles;
 
-    vector<double> sampling_weights;
-    for (auto &particle : this->particles) {
-        sampling_weights.push_back(particle.weight);
-    }
-
     // pick a random index
     uniform_int_distribution<int> rand_discrete(0, num_particles-1);
     int index = rand_discrete(gen);
 
     // get max weight
-    double max_weight = *max_element(sampling_weights.begin(), sampling_weights.end());
+    double max_weight = *max_element(this->weights.begin(), this->weights.end());
 
     // uniform random distribution [0.0, max_weight)
     uniform_real_distribution<double> rand_continuous(0.0, max_weight);
 
+    // Spinning wheel re-sampling
     double beta = 0.0;
-
-    // Spinning wheel resampling
     for (int i = 0; i < num_particles; i++) {
         beta += rand_continuous(gen) * 2.0;
-        while (beta > sampling_weights[index]) {
+        while (beta > this->weights[index]) {
             index = (index + 1) % num_particles;
-            beta -= sampling_weights[index];
+            beta -= this->weights[index];
         }
         resampled_particles.push_back(particles[index]);
     }
