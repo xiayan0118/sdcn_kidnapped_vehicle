@@ -37,7 +37,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
      * NOTE: Consult particle_filter.h for more information about this method
      *   (and others in this file).
      */
-    num_particles = 15;  // TODO: Set the number of particles
+    num_particles = 20;  // TODO: Set the number of particles
 
     normal_distribution<double> dist_x(x, std[0]);
     normal_distribution<double> dist_y(y, std[1]);
@@ -175,12 +175,11 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
         particle.weight = 1.0;
         for (auto &trans_ob : transformed_obs) {
-
             for (auto &v_lm : valid_landmarks) {
                 if (trans_ob.id == v_lm.id) {
                     double prob = gaussian_const
                                   * exp(-1.0 * ((pow((trans_ob.x - v_lm.x), 2) / (2.0 * s_x_squared))
-                                                + pow((trans_ob.y - v_lm.y), 2)/(2.0 * s_y_squared)));
+                                                + pow((trans_ob.y - v_lm.y), 2) / (2.0 * s_y_squared)));
 
                     particle.weight *= prob;
                 }
