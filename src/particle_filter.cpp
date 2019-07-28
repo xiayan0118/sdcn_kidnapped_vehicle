@@ -37,7 +37,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
      * NOTE: Consult particle_filter.h for more information about this method
      *   (and others in this file).
      */
-    this->num_particles = 15;  // TODO: Set the number of particles
+    this->num_particles = 20;  // Number of particles. Can be tuned
 
     normal_distribution<double> dist_x(x, std[0]);
     normal_distribution<double> dist_y(y, std[1]);
@@ -76,10 +76,12 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
         double pred_x, pred_y, pred_theta;
 
         if (fabs(yaw_rate) > 1e-3) {
+            // Formula when yaw != 0
             pred_x = x + (velocity / yaw_rate) * (sin(theta + yaw_rate * delta_t) - sin(theta));
             pred_y = y + (velocity / yaw_rate) * (cos(theta) - cos(theta + yaw_rate * delta_t));
             pred_theta = theta + yaw_rate * delta_t;
         } else {
+            // Formula when yaw == 0
             pred_x = x + velocity * cos(theta) * delta_t;
             pred_y = y + velocity * sin(theta) * delta_t;
             pred_theta = theta;
@@ -110,6 +112,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
         double min_dist = numeric_limits<double>::max();
         int min_id = -1;
 
+        // Find 1-nearest prediction and assign its ID to an observation
         for (auto &pred : predicted) {
             double cur_dist = dist(obs.x, obs.y, pred.x, pred.y);
             if (cur_dist < min_dist) {
@@ -117,7 +120,6 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
                 min_id = pred.id;
             }
         }
-
         obs.id = min_id;
     }
 }
@@ -152,6 +154,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         double y = particle.y;
         double theta = particle.theta;
 
+        // Landmark predictions within reach
         vector<LandmarkObs> valid_landmarks;
         for (auto &lm : map_landmarks.landmark_list) {
             float lm_x = lm.x_f;
@@ -163,6 +166,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             }
         }
 
+        // Transform observations from car's coordinates to map coordinates
         vector<LandmarkObs> transformed_obs;
         for (auto &obs : observations) {
             double trans_x = x + cos(theta) * obs.x - sin(theta) * obs.y;
@@ -170,8 +174,10 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             transformed_obs.push_back(LandmarkObs { obs.id, trans_x, trans_y });
         }
 
+        // Associate observations to landmark predictions
         this->dataAssociation(valid_landmarks, transformed_obs);
 
+        // Assigning particle weights using 2D Gaussian density function
         particle.weight = 1.0;
         for (auto &trans_ob : transformed_obs) {
             for (auto &v_lm : valid_landmarks) {
@@ -183,7 +189,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                 }
             }
         }
-
         updated_weights.push_back(particle.weight);
     }
 
@@ -198,6 +203,7 @@ void ParticleFilter::resample() {
      *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
      */
 
+    // Here, we use the "Resampling Wheel" algorithm discussed in class
     vector<Particle> resampled_particles;
 
     // pick a random index
