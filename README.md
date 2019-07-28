@@ -139,4 +139,16 @@ The things the grading code is looking for are:
 
 2. **Performance**: your particle filter should complete execution within the time of 100 seconds.
 
+### Screenshots
 
+#### 20 Particles
+![alt text](./images/particle_20_result.png)
+
+#### 50 Particles
+![alt text](./images/particle_50_result.png)
+
+#### 100 Particles
+![alt text](./images/particle_100_result.png)
+
+As shown in the screenshots above, smaller number of particles (e.g. 20) is slightly faster but less accurate. On the other hand, more particles (100) lead to slightly slower execution but better accuracy.
+ 
